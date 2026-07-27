@@ -1,7 +1,7 @@
-export const environment = {
-  backendMode: "mock",
-  apiBaseUrl: "https://api.example.com",
-  realtimeUrl: "wss://api.example.com/realtime",
-} as const;
+export type BackendMode = "mock" | "remote";
 
-export type BackendMode = (typeof environment)["backendMode"];
+export const environment = {
+  backendMode: "remote" as BackendMode,
+  apiBaseUrl: "https://trustroute-api-latest.onrender.com/api",
+  realtimeUrl: "wss://trustroute-api-latest.onrender.com/realtime",
+} as const;
