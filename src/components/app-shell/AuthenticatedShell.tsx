@@ -40,12 +40,16 @@ export function AuthenticatedShell({
   children: React.ReactNode;
   forcedRole?: Role;
 }) {
-  const { session } = useAuth();
+  const { session, isHydrating } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!session) {
+    if (isHydrating) {
+      return;
+    }
+
+    if (isHydrating || !session) {
       router.replace(routes.login);
       return;
     }
@@ -57,9 +61,9 @@ export function AuthenticatedShell({
           : routes.adminDashboard,
       );
     }
-  }, [forcedRole, router, session]);
+  }, [forcedRole, isHydrating, router, session]);
 
-  if (!session) {
+  if (isHydrating || !session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background)] text-sm text-[var(--muted-foreground)]">
         Loading session...

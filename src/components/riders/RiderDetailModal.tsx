@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, ExternalLink, FileText, ShieldCheck, UserRound, X } from "lucide-react";
+import { CheckCircle2, ExternalLink, FileText, LoaderCircle, ShieldCheck, UserRound, X } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
@@ -11,12 +11,14 @@ export function RiderDetailModal({
   rider,
   title,
   busy,
+  busyAction,
   onClose,
   onAction,
 }: {
   rider: RiderReviewRecord | null;
   title: string;
   busy?: boolean;
+  busyAction?: RiderReviewAction;
   onClose: () => void;
   onAction: (action: RiderReviewAction) => void;
 }) {
@@ -157,10 +159,12 @@ export function RiderDetailModal({
             Close
           </Button>
           <Button type="button" variant="destructive" disabled={busy} onClick={() => onAction("reject")}>
-            Reject
+            {busyAction === "reject" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+            {busyAction === "reject" ? "Rejecting..." : "Reject"}
           </Button>
           <Button type="button" disabled={busy} onClick={() => onAction("approve")}>
-            Approve
+            {busyAction === "approve" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+            {busyAction === "approve" ? "Approving..." : "Approve"}
           </Button>
         </div>
       </div>

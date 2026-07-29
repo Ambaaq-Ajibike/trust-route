@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, KeyRound, LoaderCircle, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { authApi } from "@/features/auth/api";
@@ -51,9 +52,12 @@ export function ChangePasswordModal({
       setError(null);
       await authApi.changePassword(values);
       setSuccess(true);
+      toast.success("Password updated successfully.");
       reset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Password update failed.");
+      const message = err instanceof Error ? err.message : "Password update failed.";
+      setError(message);
+      toast.error(message);
     }
   });
 

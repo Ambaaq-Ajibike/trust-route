@@ -1,7 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { issuesApi } from "@/features/issues/api";
@@ -24,6 +26,10 @@ export function RiderIssuesClient() {
       issuesApi.updateStatus(id, status),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["rider-issues"] });
+      toast.success("Issue status updated.");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to update the issue status.");
     },
   });
 
@@ -63,23 +69,28 @@ export function RiderIssuesClient() {
       key: "status",
       label: "Status",
       render: (row) => (
-        <select
-          value={row.status}
-          disabled={updateStatus.isPending}
-          onChange={(event) =>
-            updateStatus.mutate({
-              id: row.id,
-              status: event.target.value as RiderIssueStatus,
-            })
-          }
-          className="min-w-36 cursor-pointer rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium outline-none transition focus:border-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {issueStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={row.status}
+            disabled={updateStatus.isPending}
+            onChange={(event) =>
+              updateStatus.mutate({
+                id: row.id,
+                status: event.target.value as RiderIssueStatus,
+              })
+            }
+            className="min-w-36 cursor-pointer rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium outline-none transition focus:border-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {issueStatuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+          {updateStatus.isPending && updateStatus.variables?.id === row.id ? (
+            <LoaderCircle className="h-4 w-4 animate-spin text-[var(--color-accent)]" />
+          ) : null}
+        </div>
       ),
     },
   ];
