@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { authApi } from "@/features/auth/api";
@@ -11,7 +13,11 @@ import type { LoginInput } from "@/features/auth/types";
 
 export function ForgotPasswordForm() {
   const [message, setMessage] = useState<string | null>(null);
-  const { register, handleSubmit } = useForm<Pick<LoginInput, "email">>({
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<Pick<LoginInput, "email">>({
     resolver: zodResolver(loginSchema.pick({ email: true })),
   });
 
@@ -19,8 +25,13 @@ export function ForgotPasswordForm() {
     <form
       className="space-y-4"
       onSubmit={handleSubmit(async ({ email }) => {
-        await authApi.requestPasswordReset(email);
-        setMessage("Reset instructions have been queued.");
+        try {
+          await authApi.requestPasswordReset(email);
+          setMessage("Reset instructions have been queued.");
+          toast.success("Reset instructions have been sent.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Unable to request a password reset.");
+        }
       })}
     >
       <div>
@@ -28,8 +39,9 @@ export function ForgotPasswordForm() {
         <Input type="email" autoComplete="email" {...register("email")} />
       </div>
       {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-      <Button className="w-full" type="submit">
-        Send reset link
+      <Button className="w-full" type="submit" disabled={isSubmitting}>
+        {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+        {isSubmitting ? "Sending..." : "Send reset link"}
       </Button>
     </form>
   );
