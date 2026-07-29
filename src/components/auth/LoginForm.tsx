@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
@@ -35,13 +37,16 @@ export function LoginForm() {
       setError(null);
       const session = await authApi.login(values);
       signIn(session);
+      toast.success("Welcome back.");
       router.replace(
         session.user.role === "supervisor"
           ? routes.supervisorDashboard
           : routes.adminDashboard,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      const message = err instanceof Error ? err.message : "Login failed.";
+      setError(message);
+      toast.error(message);
     }
   });
 
@@ -55,7 +60,15 @@ export function LoginForm() {
         ) : null}
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium">Password</label>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <label className="block text-sm font-medium">Password</label>
+          <Link
+            href={routes.forgotPassword}
+            className="text-sm font-semibold text-[var(--color-accent)] underline decoration-2 underline-offset-4 transition hover:opacity-75"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}

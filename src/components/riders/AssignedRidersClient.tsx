@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/common/Button";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -27,6 +28,10 @@ export function AssignedRidersClient({ scope }: { scope: ReviewScope }) {
     onSuccess: async () => {
       setSelected(null);
       await queryClient.invalidateQueries({ queryKey: ["assigned-riders", scope] });
+      toast.success("Rider status updated.");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to update the rider.");
     },
   });
 
@@ -79,6 +84,7 @@ export function AssignedRidersClient({ scope }: { scope: ReviewScope }) {
         rider={selected}
         title="Assigned rider details"
         busy={review.isPending}
+        busyAction={review.variables?.action}
         onClose={() => setSelected(null)}
         onAction={(action) => {
           if (selected) {

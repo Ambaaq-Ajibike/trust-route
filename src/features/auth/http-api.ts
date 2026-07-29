@@ -1,4 +1,4 @@
-import { encryptedApiRequest } from "@/lib/api-client";
+﻿import { encryptedApiRequest } from "@/lib/api-client";
 import { permissions, type Role } from "@/config/permissions";
 import type { AuthResponse, ChangePasswordInput, LoginInput } from "./types";
 
@@ -16,7 +16,7 @@ type LoginResponse = {
 function dashboardRole(roles: string[] = []): Role {
   const normalized = roles.map((role) => role.toLowerCase().replaceAll("-", "_"));
   if (normalized.includes("super_admin") || normalized.includes("superadmin")) return "super_admin";
-  if (normalized.includes("admin")) return "admin";
+  if (normalized.includes("admin")) return "super_admin";
   return "supervisor";
 }
 
@@ -45,7 +45,7 @@ function toSession(data: LoginResponse): AuthResponse {
 
 export const httpAuthApi = {
   async login(input: LoginInput): Promise<AuthResponse> {
-    return toSession(await encryptedApiRequest<LoginResponse>("/Auth/Login", {
+    return toSession(await encryptedApiRequest<LoginResponse>("/Admins/Authenticate", {
       Email: input.email,
       Password: input.password,
     }));

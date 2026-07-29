@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/common/Button";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -27,6 +28,10 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
     onSuccess: async () => {
       setSelected(null);
       await queryClient.invalidateQueries({ queryKey: ["rider-applications", scope] });
+      toast.success("Rider application decision saved.");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to review the rider application.");
     },
   });
 
@@ -92,6 +97,7 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
         rider={selected}
         title={scope === "admin" ? "Final rider approval" : "Rider application review"}
         busy={review.isPending}
+        busyAction={review.variables?.action}
         onClose={() => setSelected(null)}
         onAction={(action) => {
           if (selected) {
