@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { RiderDetailModal } from "@/components/riders/RiderDetailModal";
 import { ridersApi } from "@/features/riders/api";
 import type { ReviewScope, RiderReviewAction, RiderReviewRecord } from "@/features/riders/types";
+import { formatBackendDate } from "@/lib/date-format";
 
 export function AssignedRidersClient({ scope }: { scope: ReviewScope }) {
   const queryClient = useQueryClient();
@@ -50,7 +51,7 @@ export function AssignedRidersClient({ scope }: { scope: ReviewScope }) {
     { key: "rating", label: "Rating", render: (row) => row.rating ?? "N/A" },
     { key: "completed", label: "Completed", render: (row) => row.completedDeliveries ?? 0 },
     { key: "issues", label: "Issues", render: (row) => row.activeIssues ?? 0 },
-    { key: "lastOnline", label: "Last online", render: (row) => row.lastOnline ?? "N/A" },
+    { key: "lastOnline", label: "Last online", render: (row) => formatBackendDate(row.lastOnline, "N/A") },
     {
       key: "actions",
       label: "",
