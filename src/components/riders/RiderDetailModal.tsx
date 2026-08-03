@@ -6,6 +6,7 @@ import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import type { RiderReviewAction, RiderReviewRecord } from "@/features/riders/types";
+import { formatBackendDate } from "@/lib/date-format";
 
 export function RiderDetailModal({
   rider,
@@ -61,7 +62,7 @@ export function RiderDetailModal({
                   ["Email", rider.email],
                   ["Phone", rider.phone],
                   ["Address", rider.address],
-                  ["Submitted", rider.submittedAt],
+                  ["Submitted", formatBackendDate(rider.submittedAt)],
                   ["Supervisor", rider.assignedSupervisor],
                 ]}
               />
@@ -146,7 +147,7 @@ export function RiderDetailModal({
                     ["Rating", rider.rating ?? "N/A"],
                     ["Completed", String(rider.completedDeliveries ?? 0)],
                     ["Open issues", String(rider.activeIssues ?? 0)],
-                    ["Last online", rider.lastOnline ?? "N/A"],
+                    ["Last online", formatBackendDate(rider.lastOnline, "N/A")],
                   ]}
                 />
               </Card>

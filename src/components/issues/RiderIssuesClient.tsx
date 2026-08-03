@@ -8,6 +8,7 @@ import { PaginatedDataTable, type TableColumn } from "@/components/common/Pagina
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { issuesApi } from "@/features/issues/api";
 import type { RiderIssue, RiderIssueStatus } from "@/features/issues/types";
+import { formatBackendDate } from "@/lib/date-format";
 
 const issueStatuses: RiderIssueStatus[] = ["Open", "Under Review", "Escalated", "Resolved"];
 
@@ -40,7 +41,7 @@ export function RiderIssuesClient() {
       render: (row) => (
         <div>
           <div className="font-semibold">{row.id}</div>
-          <div className="text-xs text-[var(--muted-foreground)]">{row.reported}</div>
+          <div className="text-xs text-[var(--muted-foreground)]">{formatBackendDate(row.reported)}</div>
         </div>
       ),
     },

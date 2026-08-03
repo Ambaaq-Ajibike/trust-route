@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { LoaderCircle, Plus, X } from "lucide-react";
+import { Eye, EyeOff, LoaderCircle, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
 import { PageHeader } from "@/components/common/PageHeader";
+import { formatBackendDate } from "@/lib/date-format";
 import {
   PaginatedDataTable,
   type TableColumn,
@@ -39,7 +40,7 @@ const columns: TableColumn<AdminUser>[] = [
   {
     key: "created",
     label: "Created",
-    render: (row) => row.createdOn ? new Date(row.createdOn).toLocaleDateString() : "—",
+    render: (row) => formatBackendDate(row.createdOn),
   },
 ];
 
@@ -195,11 +196,32 @@ export default function AdminSupervisorsPage() {
   );
 }
 
-function Field({ label, name, ...props }: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function Field({ label, name, type, ...props }: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+
   return (
     <label className="block text-sm font-medium">
       {label}
-      <Input className="mt-2" name={name} required {...props} />
+      <span className={isPassword ? "relative mt-2 block" : "mt-2 block"}>
+        <Input
+          className={isPassword ? "pr-11" : undefined}
+          name={name}
+          required
+          type={isPassword && showPassword ? "text" : type}
+          {...props}
+        />
+        {isPassword ? (
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            className="absolute inset-y-0 right-0 flex w-11 cursor-pointer items-center justify-center text-[var(--muted-foreground)]"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        ) : null}
+      </span>
     </label>
   );
 }

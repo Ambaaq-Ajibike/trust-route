@@ -7,6 +7,7 @@ import { Card } from "@/components/common/Card";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { notificationsApi } from "@/features/notifications/api";
+import { formatBackendDate } from "@/lib/date-format";
 
 export function NotificationsClient() {
   const query = useQuery({
@@ -77,7 +78,7 @@ export function NotificationsClient() {
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <StatusBadge label={item.priority} />
-                  <span className="text-xs text-[var(--muted-foreground)]">{item.createdAt}</span>
+                  <span className="text-xs text-[var(--muted-foreground)]">{formatBackendDate(item.createdAt)}</span>
                 </div>
               </div>
             ))
