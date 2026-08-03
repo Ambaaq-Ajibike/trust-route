@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
+import { routes } from "@/config/routes";
 import { authApi } from "@/features/auth/api";
 import { loginSchema } from "@/features/auth/schemas";
 import type { LoginInput } from "@/features/auth/types";
 
 export function ForgotPasswordForm() {
-  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -27,8 +28,8 @@ export function ForgotPasswordForm() {
       onSubmit={handleSubmit(async ({ email }) => {
         try {
           await authApi.requestPasswordReset(email);
-          setMessage("Reset instructions have been queued.");
-          toast.success("Reset instructions have been sent.");
+          toast.success("A reset code has been sent to your email.");
+          router.push(`${routes.resetPassword}?email=${encodeURIComponent(email)}`);
         } catch (error) {
           toast.error(error instanceof Error ? error.message : "Unable to request a password reset.");
         }
@@ -38,10 +39,9 @@ export function ForgotPasswordForm() {
         <label className="mb-2 block text-sm font-medium">Email</label>
         <Input type="email" autoComplete="email" {...register("email")} />
       </div>
-      {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
       <Button className="w-full" type="submit" disabled={isSubmitting}>
         {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-        {isSubmitting ? "Sending..." : "Send reset link"}
+        {isSubmitting ? "Sending..." : "Send reset code"}
       </Button>
     </form>
   );

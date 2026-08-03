@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { RiderDetailModal } from "@/components/riders/RiderDetailModal";
 import { ridersApi } from "@/features/riders/api";
 import type { ReviewScope, RiderReviewAction, RiderReviewRecord } from "@/features/riders/types";
+import { formatBackendDate } from "@/lib/date-format";
 
 export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
   const queryClient = useQueryClient();
@@ -42,7 +43,7 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
       render: (row) => (
         <div>
           <div className="font-semibold">{row.id}</div>
-          <div className="text-xs text-[var(--muted-foreground)]">{row.submittedAt}</div>
+          <div className="text-xs text-[var(--muted-foreground)]">{formatBackendDate(row.submittedAt)}</div>
         </div>
       ),
     },

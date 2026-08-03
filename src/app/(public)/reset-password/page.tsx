@@ -1,7 +1,14 @@
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Card } from "@/components/common/Card";
 
-export default function ResetPasswordPage() {
+type ResetPasswordPageProps = {
+  searchParams: Promise<{ email?: string | string[] }>;
+};
+
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+  const { email } = await searchParams;
+  const initialEmail = typeof email === "string" ? email : "";
+
   return (
     <Card className="w-full max-w-md p-6">
       <div className="mb-6">
@@ -10,7 +17,7 @@ export default function ResetPasswordPage() {
           Enter the code sent to your email and choose a new password.
         </p>
       </div>
-      <ResetPasswordForm />
+      <ResetPasswordForm initialEmail={initialEmail} />
     </Card>
   );
 }
