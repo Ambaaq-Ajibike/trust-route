@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Percent } from "lucide-react";
 import { Card } from "@/components/common/Card";
+import { NotIntegratedBanner } from "@/components/common/NotIntegratedBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { commissionsApi, type CommissionItem } from "@/features/commissions/api";
@@ -35,6 +36,9 @@ export function CommissionsDirectoryClient() {
   useEffect(() => {
     void loadCommissions();
   }, [loadCommissions]);
+
+  const isNotIntegrated =
+    error && (error.includes("404") || error.toLowerCase().includes("not found") || error.includes("501"));
 
   const columns: TableColumn<CommissionItem>[] = [
     {
@@ -81,29 +85,36 @@ export function CommissionsDirectoryClient() {
         role="super_admin"
       />
 
-      <Card className="p-5">
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-
-        <PaginatedDataTable
-          columns={columns}
-          rows={rows}
-          getRowId={(row) => row.id}
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          loading={loading}
-          emptyMessage="No commission records found."
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
+      {isNotIntegrated ? (
+        <NotIntegratedBanner
+          featureName="Platform Commissions"
+          endpoint="POST /api/Commissions/List"
         />
-      </Card>
+      ) : (
+        <Card className="p-5">
+          {error ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <PaginatedDataTable
+            columns={columns}
+            rows={rows}
+            getRowId={(row) => row.id}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            emptyMessage="No commission records found."
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
+        </Card>
+      )}
     </div>
   );
 }

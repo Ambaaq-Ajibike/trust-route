@@ -1,8 +1,5 @@
-import { environment } from "@/config/environment";
 import { auditLogsHttpApi } from "./http-api";
-import { auditLogsMockApi } from "./mock-api";
 
-export const auditLogsApi =
-  environment.backendMode === "mock" ? auditLogsMockApi : auditLogsHttpApi;
+export const auditLogsApi = auditLogsHttpApi;
 
 export * from "./types";

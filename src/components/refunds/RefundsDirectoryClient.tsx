@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
+import { NotIntegratedBanner } from "@/components/common/NotIntegratedBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { refundsApi, type RefundItem } from "@/features/refunds/api";
@@ -38,6 +39,9 @@ export function RefundsDirectoryClient() {
   useEffect(() => {
     void loadRefunds();
   }, [loadRefunds]);
+
+  const isNotIntegrated =
+    error && (error.includes("404") || error.toLowerCase().includes("not found") || error.includes("501"));
 
   async function handleDecision(id: string, decision: "Approved" | "Rejected") {
     try {
@@ -106,29 +110,36 @@ export function RefundsDirectoryClient() {
         role="super_admin"
       />
 
-      <Card className="p-5">
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-
-        <PaginatedDataTable
-          columns={columns}
-          rows={rows}
-          getRowId={(row) => row.id}
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          loading={loading}
-          emptyMessage="No refund requests in queue."
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
+      {isNotIntegrated ? (
+        <NotIntegratedBanner
+          featureName="Refunds Management"
+          endpoint="POST /api/Refunds/List"
         />
-      </Card>
+      ) : (
+        <Card className="p-5">
+          {error ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <PaginatedDataTable
+            columns={columns}
+            rows={rows}
+            getRowId={(row) => row.id}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            emptyMessage="No refund requests in queue."
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Eye, MapPin, Package, Search, ShieldAlert } from "lucide-react";
+import { Eye, MapPin, Package, Search } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
-import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
+import { NotIntegratedBanner } from "@/components/common/NotIntegratedBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -41,6 +41,9 @@ export function DeliveriesDirectoryClient() {
   useEffect(() => {
     void loadDeliveries();
   }, [loadDeliveries]);
+
+  const isNotIntegrated =
+    error && (error.includes("404") || error.toLowerCase().includes("not found") || error.includes("501"));
 
   const columns: TableColumn<DeliveryItem>[] = [
     {
@@ -113,59 +116,66 @@ export function DeliveriesDirectoryClient() {
         role="super_admin"
       />
 
-      <Card className="p-5">
-        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--muted-foreground)]" />
-            <Input
-              placeholder="Search by order ID, customer name, or location..."
-              value={search}
+      {isNotIntegrated ? (
+        <NotIntegratedBanner
+          featureName="Deliveries Directory"
+          endpoint="POST /api/Deliveries/List"
+        />
+      ) : (
+        <Card className="p-5">
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--muted-foreground)]" />
+              <Input
+                placeholder="Search by order ID, customer name, or location..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-9"
+              />
+            </div>
+
+            <select
+              value={status}
               onChange={(e) => {
-                setSearch(e.target.value);
+                setStatus(e.target.value);
                 setPage(1);
               }}
-              className="pl-9"
-            />
+              className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none"
+            >
+              <option value="">All statuses</option>
+              <option value="Pending">Pending Bids</option>
+              <option value="InTransit">In Transit</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
           </div>
 
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
+          {error ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <PaginatedDataTable
+            columns={columns}
+            rows={rows}
+            getRowId={(row) => row.id}
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            loading={loading}
+            emptyMessage="No delivery records found."
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
               setPage(1);
             }}
-            className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none"
-          >
-            <option value="">All statuses</option>
-            <option value="Pending">Pending Bids</option>
-            <option value="InTransit">In Transit</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </div>
-
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-
-        <PaginatedDataTable
-          columns={columns}
-          rows={rows}
-          getRowId={(row) => row.id}
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          loading={loading}
-          emptyMessage="No delivery records found."
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
-        />
-      </Card>
+          />
+        </Card>
+      )}
     </div>
   );
 }
