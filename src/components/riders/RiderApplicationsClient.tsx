@@ -1,12 +1,13 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye } from "lucide-react";
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/common/Button";
 import { PaginatedDataTable, type TableColumn } from "@/components/common/PaginatedDataTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { CreateRiderModal } from "@/components/riders/CreateRiderModal";
 import { RiderDetailModal } from "@/components/riders/RiderDetailModal";
 import { ridersApi } from "@/features/riders/api";
 import type { ReviewScope, RiderReviewAction, RiderReviewRecord } from "@/features/riders/types";
@@ -17,6 +18,7 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [selected, setSelected] = useState<RiderReviewRecord | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const query = useQuery({
     queryKey: ["rider-applications", scope, page, pageSize],
@@ -78,7 +80,16 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
   ];
 
   return (
-    <>
+    <div className="space-y-4">
+      {scope === "supervisor" ? (
+        <div className="flex justify-end">
+          <Button type="button" onClick={() => setShowCreateModal(true)}>
+            <UserPlus className="h-4 w-4" />
+            Register new rider
+          </Button>
+        </div>
+      ) : null}
+
       <PaginatedDataTable
         columns={columns}
         rows={query.data?.rows ?? []}
@@ -94,6 +105,7 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
           setPageSize(nextPageSize);
         }}
       />
+
       <RiderDetailModal
         rider={selected}
         title={scope === "admin" ? "Final rider approval" : "Rider application review"}
@@ -106,6 +118,14 @@ export function RiderApplicationsClient({ scope }: { scope: ReviewScope }) {
           }
         }}
       />
-    </>
+
+      <CreateRiderModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          void queryClient.invalidateQueries({ queryKey: ["rider-applications"] });
+        }}
+      />
+    </div>
   );
 }

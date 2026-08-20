@@ -94,4 +94,39 @@ export const mockRidersApi = {
     });
     return assignedRiders.find((item) => item.id === id);
   },
+
+  async createRiderBySupervisor(payload: Record<string, unknown>) {
+    await mockDelay(300);
+    const newId = `RDR-${Date.now().toString().slice(-4)}`;
+    riderApplications.unshift({
+      id: newId,
+      riderId: `usr-${Date.now()}`,
+      name: `${payload.FirstName ?? "New"} ${payload.LastName ?? "Rider"}`,
+      email: String(payload.Email ?? ""),
+      phone: String(payload.PhoneNumber ?? ""),
+      city: "Lagos",
+      address: String(payload.ResidentialAddress ?? ""),
+      status: "Pending Verification",
+      submittedAt: new Date().toISOString(),
+      assignedSupervisor: "Current Supervisor",
+      documents: [
+        { type: "nin", label: "NIN", fileName: "NIN doc", fileType: "image", url: String(payload.NinDocument ?? ""), verified: false },
+      ],
+      vehicle: {
+        type: String(payload.VehicleType ?? "Motorcycle"),
+        plateNumber: String(payload.VehiclePlateNumber ?? ""),
+        color: "Black",
+        capacity: "Standard",
+      },
+      nextOfKin: {
+        name: `${payload.NextOfKinFirstName ?? ""} ${payload.NextOfKinLastName ?? ""}`.trim(),
+        phone: String(payload.NextOfKinPhoneNumber ?? ""),
+        relationship: String(payload.NextOfKinRelationship ?? ""),
+      },
+      relatives: [],
+      checks: [],
+      notes: "Registered by supervisor",
+    });
+    return true;
+  },
 };

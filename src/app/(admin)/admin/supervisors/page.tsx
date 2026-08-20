@@ -14,11 +14,11 @@ import {
   type TableColumn,
 } from "@/components/common/PaginatedDataTable";
 import {
-  adminHttpApi,
+  adminApi,
   type AdminRole,
   type AdminRoleFilter,
   type AdminUser,
-} from "@/features/admin/http-api";
+} from "@/features/admin/api";
 
 const columns: TableColumn<AdminUser>[] = [
   {
@@ -44,6 +44,15 @@ const columns: TableColumn<AdminUser>[] = [
   },
 ];
 
+const initialForm = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phoneNumber: "",
+  password: "",
+  role: "Supervisor" as AdminRole,
+};
+
 export default function AdminSupervisorsPage() {
   const [rows, setRows] = useState<AdminUser[]>([]);
   const [page, setPage] = useState(1);
@@ -56,11 +65,13 @@ export default function AdminSupervisorsPage() {
   const [creating, setCreating] = useState(false);
   const [createdMessage, setCreatedMessage] = useState<string | null>(null);
 
+  const [form, setForm] = useState(initialForm);
+
   const loadAdmins = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await adminHttpApi.list(page, pageSize, role);
+      const result = await adminApi.list(page, pageSize, role);
       setRows(result.items ?? []);
       setTotal(result.totalCount ?? 0);
     } catch (requestError) {
@@ -73,28 +84,33 @@ export default function AdminSupervisorsPage() {
   }, [page, pageSize, role]);
 
   useEffect(() => {
-    // The request callback updates loading and result state after this external API sync.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadAdmins();
   }, [loadAdmins]);
 
-  async function createAdmin(formData: FormData) {
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (form.phoneNumber.includes("@")) {
+      const msg = "Phone number must be a valid telephone number (e.g. 08012345678), not an email address.";
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     try {
       setCreating(true);
       setError(null);
       setCreatedMessage(null);
-      const selectedRole = formData.get("role") as AdminRole;
-      await adminHttpApi.create({
-        firstName: String(formData.get("firstName") ?? ""),
-        lastName: String(formData.get("lastName") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        phoneNumber: String(formData.get("phoneNumber") ?? ""),
-        password: String(formData.get("password") ?? ""),
-        role: selectedRole,
+      const result = await adminApi.create({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        password: form.password,
+        role: form.role,
       });
-      const message = selectedRole === "Admin" ? "Super admin created." : "Supervisor created.";
+      const message = result.message || `${form.role} created successfully.`;
       setCreatedMessage(message);
       toast.success(message);
+      setForm(initialForm);
       setShowCreate(false);
       setPage(1);
       await loadAdmins();
@@ -102,6 +118,7 @@ export default function AdminSupervisorsPage() {
       const message = requestError instanceof Error ? requestError.message : "Unable to create administrator.";
       setError(message);
       toast.error(message);
+      // NOTE: Form state is NOT reset on error so typed values are preserved for correction.
     } finally {
       setCreating(false);
     }
@@ -127,17 +144,58 @@ export default function AdminSupervisorsPage() {
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             Choose Supervisor or Super admin; the backend receives Supervisor or Admin respectively.
           </p>
-          <form action={createAdmin} className="mt-5 grid gap-4 md:grid-cols-2">
-            <Field label="First name" name="firstName" autoComplete="given-name" />
-            <Field label="Last name" name="lastName" autoComplete="family-name" />
-            <Field label="Email" name="email" type="email" autoComplete="email" />
-            <Field label="Phone number" name="phoneNumber" type="tel" autoComplete="tel" />
-            <Field label="Temporary password" name="password" type="password" autoComplete="new-password" />
+
+          {error ? (
+            <div className="mt-4 rounded-xl border border-[#fec4c0] bg-[#fffbfa] p-3 text-sm text-[#b42318]">
+              <strong>Backend Response:</strong> {error}
+            </div>
+          ) : null}
+
+          <form onSubmit={handleSubmit} className="mt-5 grid gap-4 md:grid-cols-2">
+            <Field
+              label="First name"
+              name="firstName"
+              value={form.firstName}
+              onChange={(e) => setForm((prev) => ({ ...prev, firstName: e.target.value }))}
+              autoComplete="given-name"
+            />
+            <Field
+              label="Last name"
+              name="lastName"
+              value={form.lastName}
+              onChange={(e) => setForm((prev) => ({ ...prev, lastName: e.target.value }))}
+              autoComplete="family-name"
+            />
+            <Field
+              label="Email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+              autoComplete="email"
+            />
+            <Field
+              label="Phone number"
+              name="phoneNumber"
+              type="tel"
+              value={form.phoneNumber}
+              onChange={(e) => setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))}
+              autoComplete="tel"
+            />
+            <Field
+              label="Temporary password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+              autoComplete="new-password"
+            />
             <label className="block text-sm font-medium">
               Role
               <select
                 name="role"
-                defaultValue="Supervisor"
+                value={form.role}
+                onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as AdminRole }))}
                 className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none"
               >
                 <option value="Supervisor">Supervisor</option>
@@ -155,7 +213,7 @@ export default function AdminSupervisorsPage() {
       ) : null}
 
       {createdMessage ? <p className="text-sm text-emerald-700">{createdMessage}</p> : null}
-      {error ? <p className="text-sm text-[#b42318]">{error}</p> : null}
+      {!showCreate && error ? <p className="text-sm text-[#b42318]">{error}</p> : null}
 
       <Card className="p-5">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -196,7 +254,12 @@ export default function AdminSupervisorsPage() {
   );
 }
 
-function Field({ label, name, type, ...props }: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function Field({
+  label,
+  name,
+  type,
+  ...props
+}: { label: string; name: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
 

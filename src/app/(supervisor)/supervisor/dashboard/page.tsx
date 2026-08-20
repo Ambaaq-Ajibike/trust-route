@@ -1,45 +1,64 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AlertTriangle, Bike, ClipboardCheck, FileSearch } from "lucide-react";
 import { Card } from "@/components/common/Card";
 import { MetricCard } from "@/components/common/MetricCard";
 import { PageHeader } from "@/components/common/PageHeader";
-import { MiniLineChart } from "@/components/dashboard/MiniLineChart";
-import { QueueDonut } from "@/components/dashboard/QueueDonut";
 import { RiderApplicationsClient } from "@/components/riders/RiderApplicationsClient";
-import { mockStore } from "@/lib/mock-store";
+import { adminApi, type DashboardMetrics } from "@/features/admin/api";
 import { useAuth } from "@/providers/AuthProvider";
-
-const focusItems = [
-  {
-    icon: ClipboardCheck,
-    title: "Review queue",
-    value: "8 due today",
-    detail: "Prioritize complete files first.",
-  },
-  {
-    icon: FileSearch,
-    title: "Document quality",
-    value: "18% unclear",
-    detail: "NIN slips need the most rechecks.",
-  },
-  {
-    icon: Bike,
-    title: "Rider coverage",
-    value: "24 assigned",
-    detail: "3 riders have open issues.",
-  },
-  {
-    icon: AlertTriangle,
-    title: "Escalations",
-    value: "3 open",
-    detail: "1 high priority item pending.",
-  },
-];
 
 export default function SupervisorDashboardPage() {
   const { session } = useAuth();
-  const metrics = mockStore.dashboardMetrics("supervisor");
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    activeDeliveries: 0,
+    pendingApprovals: 0,
+    openDisputes: 0,
+    pendingPayouts: 0,
+    dailyRevenue: 0,
+    commission: 0,
+  });
+
+  useEffect(() => {
+    let active = true;
+    adminApi
+      .getDashboard()
+      .then((res) => {
+        if (active && res) setMetrics(res);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const focusItems = [
+    {
+      icon: ClipboardCheck,
+      title: "Pending applications",
+      value: String(metrics.pendingApprovals ?? 0),
+      detail: "Prioritize complete files first.",
+    },
+    {
+      icon: FileSearch,
+      title: "Active deliveries",
+      value: String(metrics.activeDeliveries ?? 0),
+      detail: "Live delivery operations.",
+    },
+    {
+      icon: Bike,
+      title: "Pending payouts",
+      value: String(metrics.pendingPayouts ?? 0),
+      detail: "Rider wallet requests.",
+    },
+    {
+      icon: AlertTriangle,
+      title: "Escalated disputes",
+      value: String(metrics.openDisputes ?? 0),
+      detail: "Require follow-up.",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -50,15 +69,10 @@ export default function SupervisorDashboardPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Pending applications" value={String(metrics.pendingApplications)} detail="Need supervisor action" />
-        <MetricCard label="Assigned riders" value={String(metrics.assignedRiders)} detail="Under your coverage" />
-        <MetricCard label="Open issues" value={String(metrics.openIssues)} detail="Require follow-up" />
-        <MetricCard label="Active reviews" value={String(metrics.activeReviews)} detail="In progress now" />
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-        <MiniLineChart />
-        <QueueDonut />
+        <MetricCard label="Pending approvals" value={String(metrics.pendingApprovals ?? 0)} detail="Need supervisor action" />
+        <MetricCard label="Active deliveries" value={String(metrics.activeDeliveries ?? 0)} detail="Live operations" />
+        <MetricCard label="Open disputes" value={String(metrics.openDisputes ?? 0)} detail="Require follow-up" />
+        <MetricCard label="Pending payouts" value={String(metrics.pendingPayouts ?? 0)} detail="Wallet requests" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

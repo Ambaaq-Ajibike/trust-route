@@ -1,4 +1,4 @@
-﻿import { environment } from "@/config/environment";
+import { environment } from "@/config/environment";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -26,8 +26,36 @@ function toBase64(value: ArrayBuffer): string {
   return btoa(binary);
 }
 
+export function sanitizeBase64(input: string): string {
+  let cleaned = input.trim();
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1).trim();
+  }
+  if (cleaned.includes("%")) {
+    try {
+      cleaned = decodeURIComponent(cleaned);
+    } catch {
+      // Ignore decoding failure
+    }
+  }
+  // Replace spaces with + (fix HTTP form/URL body space conversion)
+  cleaned = cleaned.replace(/ /g, "+");
+  // Remove whitespace and newlines
+  cleaned = cleaned.replace(/[\s\r\n]+/g, "");
+
+  // Fix missing padding
+  const remainder = cleaned.length % 4;
+  if (remainder === 2) {
+    cleaned += "==";
+  } else if (remainder === 3) {
+    cleaned += "=";
+  }
+  return cleaned;
+}
+
 function fromBase64(value: string): Uint8Array<ArrayBuffer> {
-  const binary = atob(value);
+  const sanitized = sanitizeBase64(value);
+  const binary = atob(sanitized);
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) {
     bytes[index] = binary.charCodeAt(index);
@@ -45,10 +73,33 @@ export async function encryptPayloadLocally(payload: unknown): Promise<string> {
 }
 
 export async function decryptPayloadLocally<T>(cipherText: string): Promise<T> {
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-CBC", iv: encryptionIv() },
-    await importAesKey(),
-    fromBase64(cipherText),
-  );
-  return JSON.parse(decoder.decode(decrypted)) as T;
+  if (typeof cipherText !== "string") {
+    return cipherText as T;
+  }
+
+  const trimmed = cipherText.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      return JSON.parse(trimmed) as T;
+    } catch {
+      // Not raw JSON, proceed to AES decrypt
+    }
+  }
+
+  try {
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-CBC", iv: encryptionIv() },
+      await importAesKey(),
+      fromBase64(trimmed),
+    );
+    const text = decoder.decode(decrypted);
+    return JSON.parse(text) as T;
+  } catch (primaryError) {
+    // Fallback: If payload was already unencrypted or double-stringified
+    try {
+      return JSON.parse(trimmed) as T;
+    } catch {
+      throw primaryError;
+    }
+  }
 }
