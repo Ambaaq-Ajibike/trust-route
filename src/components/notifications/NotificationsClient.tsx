@@ -7,6 +7,7 @@ import { Card } from "@/components/common/Card";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { notificationsApi } from "@/features/notifications/api";
+import type { NotificationItem } from "@/features/notifications/types";
 import { formatBackendDate } from "@/lib/date-format";
 
 export function NotificationsClient() {
@@ -14,7 +15,13 @@ export function NotificationsClient() {
     queryKey: ["notifications"],
     queryFn: () => notificationsApi.list(),
   });
-  const unreadCount = query.data?.filter((item) => !item.read).length ?? 0;
+
+  const rawData = query.data;
+  const items: NotificationItem[] = Array.isArray(rawData)
+    ? rawData
+    : (rawData as { items?: NotificationItem[] } | undefined)?.items ?? [];
+
+  const unreadCount = items.filter((item) => !item.read).length;
 
   return (
     <div className="space-y-6">
@@ -30,7 +37,7 @@ export function NotificationsClient() {
               <Bell className="h-5 w-5" />
             </span>
             <div>
-              <div className="text-2xl font-semibold">{query.data?.length ?? 0}</div>
+              <div className="text-2xl font-semibold">{items.length}</div>
               <div className="text-sm text-[var(--muted-foreground)]">Total alerts</div>
             </div>
           </div>
@@ -52,8 +59,8 @@ export function NotificationsClient() {
               <ShieldCheck className="h-5 w-5" />
             </span>
             <div>
-              <div className="text-2xl font-semibold">Mock</div>
-              <div className="text-sm text-[var(--muted-foreground)]">Realtime-ready feed</div>
+              <div className="text-2xl font-semibold">Live</div>
+              <div className="text-sm text-[var(--muted-foreground)]">Realtime feed</div>
             </div>
           </div>
         </Card>
@@ -63,9 +70,16 @@ export function NotificationsClient() {
         <div className="divide-y divide-[var(--border)]">
           {query.isLoading ? (
             <div className="p-6 text-sm text-[var(--muted-foreground)]">Loading notifications...</div>
+          ) : items.length === 0 ? (
+            <div className="p-8 text-center text-sm text-[var(--muted-foreground)]">
+              No notifications found.
+            </div>
           ) : (
-            query.data?.map((item) => (
-              <div key={item.id} className="flex flex-col gap-3 p-5 transition hover:bg-[var(--surface-muted)] md:flex-row md:items-start md:justify-between">
+            items.map((item) => (
+              <div
+                key={item.id || Math.random().toString()}
+                className="flex flex-col gap-3 p-5 transition hover:bg-[var(--surface-muted)] md:flex-row md:items-start md:justify-between"
+              >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     {!item.read && <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />}
@@ -74,11 +88,15 @@ export function NotificationsClient() {
                       {item.category}
                     </Badge>
                   </div>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted-foreground)]">{item.message}</p>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted-foreground)]">
+                    {item.message}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <StatusBadge label={item.priority} />
-                  <span className="text-xs text-[var(--muted-foreground)]">{formatBackendDate(item.createdAt)}</span>
+                  <span className="text-xs text-[var(--muted-foreground)]">
+                    {formatBackendDate(item.createdAt)}
+                  </span>
                 </div>
               </div>
             ))

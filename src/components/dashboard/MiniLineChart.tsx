@@ -1,16 +1,22 @@
-import { reviewTrend } from "@/features/supervisor/mock-data";
+"use client";
 
-export function MiniLineChart() {
+type TrendPoint = {
+  day: string;
+  approved: number;
+  rejected: number;
+};
+
+export function MiniLineChart({ data = [] }: { data?: TrendPoint[] }) {
   const width = 520;
   const height = 180;
-  const max = Math.max(...reviewTrend.flatMap((item) => [item.approved, item.rejected]));
-  const points = reviewTrend.map((item, index) => {
-    const x = (index / (reviewTrend.length - 1)) * width;
+  const max = Math.max(...data.flatMap((item) => [item.approved, item.rejected]), 10);
+  const points = data.map((item, index) => {
+    const x = (index / Math.max(data.length - 1, 1)) * width;
     const y = height - (item.approved / max) * (height - 24) - 12;
     return `${x},${y}`;
   });
-  const rejectedPoints = reviewTrend.map((item, index) => {
-    const x = (index / (reviewTrend.length - 1)) * width;
+  const rejectedPoints = data.map((item, index) => {
+    const x = (index / Math.max(data.length - 1, 1)) * width;
     const y = height - (item.rejected / max) * (height - 24) - 12;
     return `${x},${y}`;
   });
@@ -39,11 +45,15 @@ export function MiniLineChart() {
             strokeDasharray="4 6"
           />
         ))}
-        <polyline fill="none" stroke="var(--color-accent)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={points.join(" ")} />
-        <polyline fill="none" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={rejectedPoints.join(" ")} />
+        {data.length > 0 ? (
+          <>
+            <polyline fill="none" stroke="var(--color-accent)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={points.join(" ")} />
+            <polyline fill="none" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={rejectedPoints.join(" ")} />
+          </>
+        ) : null}
       </svg>
       <div className="mt-2 grid grid-cols-5 text-center text-xs text-[var(--muted-foreground)]">
-        {reviewTrend.map((item) => <span key={item.day}>{item.day}</span>)}
+        {data.map((item) => <span key={item.day}>{item.day}</span>)}
       </div>
     </div>
   );

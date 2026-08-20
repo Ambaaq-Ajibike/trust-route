@@ -1,16 +1,34 @@
-import { revenueTrend } from "@/features/admin/mock-data";
+"use client";
+
+import { useEffect, useState } from "react";
+import { adminApi, type TrendPoint } from "@/features/admin/api";
 
 export function AdminRevenueChart() {
+  const [data, setData] = useState<TrendPoint[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    adminApi
+      .getRevenueTrend()
+      .then((res) => {
+        if (active && res && res.length > 0) setData(res);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const width = 680;
   const height = 220;
-  const max = Math.max(...revenueTrend.map((item) => item.revenue));
-  const revenuePoints = revenueTrend.map((item, index) => {
-    const x = (index / (revenueTrend.length - 1)) * width;
+  const max = Math.max(...data.map((item) => item.revenue), 1000);
+  const revenuePoints = data.map((item, index) => {
+    const x = (index / Math.max(data.length - 1, 1)) * width;
     const y = height - (item.revenue / max) * (height - 28) - 14;
     return `${x},${y}`;
   });
-  const commissionPoints = revenueTrend.map((item, index) => {
-    const x = (index / (revenueTrend.length - 1)) * width;
+  const commissionPoints = data.map((item, index) => {
+    const x = (index / Math.max(data.length - 1, 1)) * width;
     const y = height - (item.commission / max) * (height - 28) - 14;
     return `${x},${y}`;
   });
@@ -48,13 +66,17 @@ export function AdminRevenueChart() {
             strokeDasharray="4 7"
           />
         ))}
-        <polygon points={areaPoints} fill="var(--color-accent)" opacity="0.1" />
-        <polyline fill="none" stroke="var(--color-accent)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={revenuePoints.join(" ")} />
-        <polyline fill="none" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={commissionPoints.join(" ")} />
+        {data.length > 0 ? (
+          <>
+            <polygon points={areaPoints} fill="var(--color-accent)" opacity="0.1" />
+            <polyline fill="none" stroke="var(--color-accent)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={revenuePoints.join(" ")} />
+            <polyline fill="none" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={commissionPoints.join(" ")} />
+          </>
+        ) : null}
       </svg>
       <div className="mt-2 grid grid-cols-7 text-center text-xs text-[var(--muted-foreground)]">
-        {revenueTrend.map((item) => (
-          <span key={item.day}>{item.day}</span>
+        {data.map((item, idx) => (
+          <span key={item.day || idx}>{item.day}</span>
         ))}
       </div>
     </div>

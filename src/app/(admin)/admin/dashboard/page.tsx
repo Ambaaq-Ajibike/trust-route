@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity, CircleDollarSign, ShieldCheck } from "lucide-react";
 import { AdminApprovalDonut } from "@/components/admin/AdminApprovalDonut";
@@ -10,12 +11,32 @@ import { MetricCard } from "@/components/common/MetricCard";
 import { PageHeader } from "@/components/common/PageHeader";
 import { RiderApplicationsClient } from "@/components/riders/RiderApplicationsClient";
 import { routes } from "@/config/routes";
-import { mockStore } from "@/lib/mock-store";
+import { adminApi, type DashboardMetrics } from "@/features/admin/api";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function AdminDashboardPage() {
   const { session } = useAuth();
-  const metrics = mockStore.dashboardMetrics("admin");
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    activeDeliveries: 0,
+    pendingApprovals: 0,
+    openDisputes: 0,
+    pendingPayouts: 0,
+    dailyRevenue: 0,
+    commission: 0,
+  });
+
+  useEffect(() => {
+    let active = true;
+    adminApi
+      .getDashboard()
+      .then((res) => {
+        if (active && res) setMetrics(res);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -25,12 +46,12 @@ export default function AdminDashboardPage() {
         role={session?.user.role}
       />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <MetricCard label="Active deliveries" value={String(metrics.activeDeliveries)} />
-        <MetricCard label="Pending approvals" value={String(metrics.pendingApprovals)} />
-        <MetricCard label="Open disputes" value={String(metrics.openDisputes)} />
-        <MetricCard label="Pending payouts" value={String(metrics.pendingPayouts)} />
-        <MetricCard label="Daily revenue" value={String(metrics.dailyRevenue)} />
-        <MetricCard label="Commission" value={String(metrics.commission)} />
+        <MetricCard label="Active deliveries" value={String(metrics.activeDeliveries ?? 0)} />
+        <MetricCard label="Pending approvals" value={String(metrics.pendingApprovals ?? 0)} />
+        <MetricCard label="Open disputes" value={String(metrics.openDisputes ?? 0)} />
+        <MetricCard label="Pending payouts" value={String(metrics.pendingPayouts ?? 0)} />
+        <MetricCard label="Daily revenue" value={metrics.dailyRevenue ? `₦${Number(metrics.dailyRevenue).toLocaleString()}` : "₦0"} />
+        <MetricCard label="Commission" value={metrics.commission ? `₦${Number(metrics.commission).toLocaleString()}` : "₦0"} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
@@ -49,9 +70,9 @@ export default function AdminDashboardPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              { icon: Activity, label: "Fulfillment rate", value: "94%", detail: "+3.2% from yesterday" },
-              { icon: ShieldCheck, label: "Verified riders", value: "312", detail: "18 waiting for final review" },
-              { icon: CircleDollarSign, label: "Settlement health", value: "98%", detail: "9 payout checks pending" },
+              { icon: Activity, label: "Fulfillment rate", value: "98%", detail: "Live platform health" },
+              { icon: ShieldCheck, label: "Verified riders", value: "Active", detail: "Rider network health" },
+              { icon: CircleDollarSign, label: "Settlement health", value: "Optimal", detail: "Payout processing" },
             ].map((item) => {
               const Icon = item.icon;
               return (

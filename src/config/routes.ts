@@ -5,6 +5,7 @@ export const routes = {
   supervisorDashboard: "/supervisor/dashboard",
   supervisorApplications: "/supervisor/rider-applications",
   supervisorRiders: "/supervisor/riders",
+  supervisorCustomers: "/supervisor/customers",
   supervisorIssues: "/supervisor/issues",
   adminDashboard: "/admin/dashboard",
   adminSupervisors: "/admin/supervisors",

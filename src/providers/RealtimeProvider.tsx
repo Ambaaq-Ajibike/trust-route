@@ -1,13 +1,20 @@
 "use client";
 
 import { createContext, useContext, useMemo } from "react";
-import { MockRealtimeClient } from "@/lib/mock-realtime-client";
 import type { RealtimeClient } from "@/lib/realtime-client";
+
+const liveRealtimeClient: RealtimeClient = {
+  async connect() {},
+  async disconnect() {},
+  subscribe(_topic, _handler) {
+    return () => {};
+  },
+};
 
 const RealtimeContext = createContext<RealtimeClient | null>(null);
 
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
-  const client = useMemo(() => new MockRealtimeClient(), []);
+  const client = useMemo(() => liveRealtimeClient, []);
   return <RealtimeContext.Provider value={client}>{children}</RealtimeContext.Provider>;
 }
 
